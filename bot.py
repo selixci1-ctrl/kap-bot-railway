@@ -21,6 +21,9 @@ HEADERS = {"Ocp-Apim-Subscription-Key": API_KEY}
 
 CHECK_INTERVAL = 90      # saniye
 TEST_MODE = True         # True olursa log ve test mesajı
+RETRY_COUNT = 3          # API hatasında deneme sayısı
+RETRY_DELAY = 5          # Denemeler arası bekleme (saniye)
+TIMEOUT = 60             # requests timeout (saniye)
 
 # ===========================
 # Telegram gönderim fonksiyonu
@@ -37,6 +40,20 @@ def send(msg):
         print(f"[TEST] Telegram gönderim hatası: {e}")
 
 # ===========================
+# requests.get için retry fonksiyonu
+# ===========================
+def get_with_retry(url, headers):
+    for i in range(RETRY_COUNT):
+        try:
+            r = requests.get(url, headers=headers, timeout=TIMEOUT)
+            r.raise_for_status()
+            return r
+        except Exception as e:
+            print(f"[Retry {i+1}] Hata: {e}")
+            time.sleep(RETRY_DELAY)
+    raise Exception(f"{url} için tüm denemeler başarısız oldu")
+
+# ===========================
 # Bot ana döngüsü
 # ===========================
 def main():
@@ -47,13 +64,11 @@ def main():
     while True:
         try:
             # Son ID kontrolü
-            r = requests.get(LAST_INDEX_URL, headers=HEADERS, timeout=30)
-            r.raise_for_status()
+            r = get_with_retry(LAST_INDEX_URL, HEADERS)
             last_index = r.json().get("lastDisclosureIndex", 0)
 
             # Son 10 haberi çek
-            r2 = requests.get(f"{DISCLOSURES_URL}?from={max(0,last_index-10)}", headers=HEADERS, timeout=30)
-            r2.raise_for_status()
+            r2 = get_with_retry(f"{DISCLOSURES_URL}?from={max(0,last_index-10)}", HEADERS)
             data = r2.json().get("disclosures", [])
 
             if TEST_MODE:
@@ -65,7 +80,7 @@ def main():
 
                 if idx and (first_run or idx not in old_ids):
                     # Detayı çek
-                    det = requests.get(f"{DETAIL_URL}/{idx}", headers=HEADERS, timeout=30).json()
+                    det = get_with_retry(f"{DETAIL_URL}/{idx}", HEADERS).json()
                     text = det.get("announcementDetail") or title
 
                     send(f"📢 KAP Yeni Bildirim:\n{title}\n\n{text}")
