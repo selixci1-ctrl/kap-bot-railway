@@ -3,8 +3,9 @@ from bs4 import BeautifulSoup
 import time
 
 # Telegram bilgileri
-TOKEN = "8331207546:AAELR5FRYngv26Zeh-7d21nGgpIXvscjQQE"
-CHAT_ID = "6251808036"
+TOKEN = os.getenv("TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
+
 
 URL = "https://www.kap.org.tr/tr/Bildirimler"
 
