@@ -27,6 +27,9 @@ FILTER_WORDS = [
 CHECK_INTERVAL = 90  # saniye
 TEST_MODE = True     # True olursa loglar
 
+PAGE_LOAD_TIMEOUT = 60  # Sayfa yükleme timeout
+SLEEP_AFTER_LOAD = 12    # Sayfa yüklenince bekleme süresi
+
 # ===========================
 # Telegram bildirim fonksiyonu
 # ===========================
@@ -42,7 +45,7 @@ def send(msg):
 # ===========================
 def get_haberler(driver):
     driver.get(URL)
-    time.sleep(5)  # Sayfanın tamamen yüklenmesini bekle
+    time.sleep(SLEEP_AFTER_LOAD)  # Sayfanın tamamen yüklenmesini bekle
 
     rows = driver.find_elements(By.CSS_SELECTOR, "tbody tr")
 
@@ -76,6 +79,7 @@ def main():
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     driver = webdriver.Chrome(options=chrome_options)
+    driver.set_page_load_timeout(PAGE_LOAD_TIMEOUT)
 
     try:
         while True:
