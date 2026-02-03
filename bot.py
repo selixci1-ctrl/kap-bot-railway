@@ -3,14 +3,14 @@ import requests
 from bs4 import BeautifulSoup
 import time
 
-# Telegram bilgileri
+# ===========================
+# Ayarlar
+# ===========================
 TOKEN = os.getenv("TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 
 if not TOKEN or not CHAT_ID:
     raise Exception("TOKEN veya CHAT_ID eksik! Railway Variables kontrol et.")
-
-
 
 URL = "https://www.kap.org.tr/tr/Bildirimler"
 
@@ -23,8 +23,11 @@ FILTER_WORDS = [
 ]
 
 CHECK_INTERVAL = 90  # saniye
+TEST_MODE = True     # True olursa her haberi log'a yazdırır
 
-
+# ===========================
+# Telegram bildirim fonksiyonu
+# ===========================
 def send(msg):
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
     requests.post(url, data={
@@ -32,7 +35,9 @@ def send(msg):
         "text": msg
     })
 
-
+# ===========================
+# KAP'tan haberleri çekme
+# ===========================
 def get_haberler():
     headers = {
         "User-Agent": "Mozilla/5.0"
@@ -51,13 +56,19 @@ def get_haberler():
         for word in FILTER_WORDS:
             if word in text:
                 haberler.append(text)
+                if TEST_MODE:
+                    print(f"[TEST] Haber bulundu: {text}")
                 break
+
+    if TEST_MODE:
+        print(f"[TEST] Toplam haber sayısı: {len(haberler)}")
 
     return haberler
 
-
+# ===========================
+# Ana döngü
+# ===========================
 def main():
-
     send("✅ KAP Bot Başladı")
 
     old = set()
@@ -72,13 +83,18 @@ def main():
                     old.add(h)
 
             if not haberler:
-                print("Bekleniyor...")
+                if TEST_MODE:
+                    print("[TEST] Yeni haber yok, bekleniyor...")
 
         except Exception as e:
             send("❌ Hata:\n" + str(e))
+            if TEST_MODE:
+                print(f"[TEST] Hata oluştu: {e}")
 
         time.sleep(CHECK_INTERVAL)
 
-
+# ===========================
+# Çalıştır
+# ===========================
 if __name__ == "__main__":
     main()
