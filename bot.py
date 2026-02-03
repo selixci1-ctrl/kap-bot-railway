@@ -7,6 +7,10 @@ import time
 TOKEN = os.getenv("TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 
+if not TOKEN or not CHAT_ID:
+    raise Exception("TOKEN veya CHAT_ID eksik! Railway Variables kontrol et.")
+
+
 
 URL = "https://www.kap.org.tr/tr/Bildirimler"
 
