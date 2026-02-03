@@ -21,9 +21,9 @@ HEADERS = {"Ocp-Apim-Subscription-Key": API_KEY}
 
 CHECK_INTERVAL = 90      # saniye
 TEST_MODE = True         # True olursa log ve test mesajı
-RETRY_COUNT = 3          # API hatasında deneme sayısı
-RETRY_DELAY = 5          # Denemeler arası bekleme (saniye)
-TIMEOUT = 60             # requests timeout (saniye)
+RETRY_COUNT = 5          # API hatasında deneme sayısı (arttırıldı)
+RETRY_DELAY = 10         # Denemeler arası bekleme (saniye, arttırıldı)
+TIMEOUT = 90             # requests timeout (saniye, arttırıldı)
 
 # ===========================
 # Telegram gönderim fonksiyonu
