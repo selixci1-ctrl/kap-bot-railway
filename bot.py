@@ -27,7 +27,7 @@ FILTER_WORDS = [
 CHECK_INTERVAL = 90        # Saniye
 TEST_MODE = True           # True olursa loglar
 PAGE_LOAD_TIMEOUT = 60     # Sayfa yükleme timeout
-SLEEP_AFTER_LOAD = 12      # Sayfa tamamen yüklenene kadar bekleme
+SLEEP_AFTER_LOAD = 18      # Sayfa tamamen yüklenene kadar bekleme
 
 # ===========================
 # Telegram bildirim fonksiyonu
@@ -46,7 +46,8 @@ def get_haberler(driver):
     driver.get(URL)
     time.sleep(SLEEP_AFTER_LOAD)  # Sayfanın tamamen yüklenmesini bekle
 
-    rows = driver.find_elements(By.CSS_SELECTOR, "tbody tr")
+    # Güncel CSS selector
+    rows = driver.find_elements(By.CSS_SELECTOR, ".list-group .list-group-item")
 
     haberler = []
 
