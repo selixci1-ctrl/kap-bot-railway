@@ -21,9 +21,9 @@ HEADERS = {"Ocp-Apim-Subscription-Key": API_KEY}
 
 CHECK_INTERVAL = 90      # saniye
 TEST_MODE = True         # True olursa log ve test mesajı
-RETRY_COUNT = 5          # API hatasında deneme sayısı (arttırıldı)
-RETRY_DELAY = 10         # Denemeler arası bekleme (saniye, arttırıldı)
-TIMEOUT = 90             # requests timeout (saniye, arttırıldı)
+RETRY_COUNT = 5          # API hatasında deneme sayısı
+RETRY_DELAY = 10         # Denemeler arası bekleme (saniye)
+TIMEOUT = 90             # requests timeout (saniye)
 
 # ===========================
 # Telegram gönderim fonksiyonu
@@ -51,7 +51,8 @@ def get_with_retry(url, headers):
         except Exception as e:
             print(f"[Retry {i+1}] Hata: {e}")
             time.sleep(RETRY_DELAY)
-    raise Exception(f"{url} için tüm denemeler başarısız oldu")
+    print(f"[ERROR] {url} için tüm denemeler başarısız oldu, sonraki döngüde tekrar denenecek.")
+    return None  # Exception fırlatmak yerine None döndür
 
 # ===========================
 # Bot ana döngüsü
@@ -65,10 +66,16 @@ def main():
         try:
             # Son ID kontrolü
             r = get_with_retry(LAST_INDEX_URL, HEADERS)
+            if not r:
+                time.sleep(CHECK_INTERVAL)
+                continue
             last_index = r.json().get("lastDisclosureIndex", 0)
 
             # Son 10 haberi çek
             r2 = get_with_retry(f"{DISCLOSURES_URL}?from={max(0,last_index-10)}", HEADERS)
+            if not r2:
+                time.sleep(CHECK_INTERVAL)
+                continue
             data = r2.json().get("disclosures", [])
 
             if TEST_MODE:
@@ -79,12 +86,12 @@ def main():
                 title = item.get("announcementTitle", "Başlık yok")
 
                 if idx and (first_run or idx not in old_ids):
-                    # Detayı çek
-                    det = get_with_retry(f"{DETAIL_URL}/{idx}", HEADERS).json()
-                    text = det.get("announcementDetail") or title
-
-                    send(f"📢 KAP Yeni Bildirim:\n{title}\n\n{text}")
-                    old_ids.add(idx)
+                    det = get_with_retry(f"{DETAIL_URL}/{idx}", HEADERS)
+                    if det:
+                        det_json = det.json()
+                        text = det_json.get("announcementDetail") or title
+                        send(f"📢 KAP Yeni Bildirim:\n{title}\n\n{text}")
+                        old_ids.add(idx)
 
             # --- TEST için sahte haber ---
             if TEST_MODE and first_run:
@@ -100,9 +107,10 @@ def main():
             first_run = False
 
         except Exception as e:
-            send(f"❌ Hata:\n{e}")
+            # Artık hata olsa da bot durmuyor, sadece log yazıyor
+            print(f"[ERROR] Ana döngü hatası: {e}")
             if TEST_MODE:
-                print(f"[TEST] Hata oluştu: {e}")
+                send(f"❌ Ana döngü hatası:\n{e}")
 
         time.sleep(CHECK_INTERVAL)
 
