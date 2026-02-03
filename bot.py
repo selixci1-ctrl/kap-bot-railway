@@ -1,28 +1,44 @@
+import os
+import requests
 import time
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
 
-URL = "https://www.kap.org.tr/tr/Bildirimler"
+TOKEN = os.getenv("TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
+if not TOKEN or not CHAT_ID:
+    raise Exception("TOKEN veya CHAT_ID eksik! Railway Variables kontrol et.")
 
-chrome_options = Options()
-chrome_options.add_argument("--headless")
-chrome_options.add_argument("--no-sandbox")
-chrome_options.add_argument("--disable-dev-shm-usage")
-driver = webdriver.Chrome(options=chrome_options)
-driver.set_page_load_timeout(60)
+API_URL = "https://www.kap.org.tr/tr/api/disclosures"  # Deneme endpoint
+CHECK_INTERVAL = 90
 
-try:
-    driver.get(URL)
-    time.sleep(18)  # Sayfanın tamamen yüklenmesini bekle
+def send(msg):
+    requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", data={
+        "chat_id": CHAT_ID,
+        "text": msg
+    })
 
-    # Tüm divleri çekiyoruz
-    all_divs = driver.find_elements(By.CSS_SELECTOR, "div")
-    print(f"Toplam div sayısı: {len(all_divs)}")
+def main():
+    send("✅ KAP API Bot Başladı")
+    old_ids = set()
 
-    # İlk 50 divin textlerini yazdır
-    for i, div in enumerate(all_divs[:50]):
-        print(f"[{i}] {div.text}\n---")
+    while True:
+        try:
+            r = requests.get(API_URL, timeout=30)
+            data = r.json()  # Eğer JSON dönüyorsa
 
-finally:
-    driver.quit()
+            # Örneğin: data["disclosures"] veya benzeri bir alan olabilir
+            for item in data.get("disclosures", []):
+                idx = item.get("disclosureIndex")
+                text = item.get("announcementTitle") or str(item)
+                if idx and idx not in old_ids:
+                    send(f"📢 Yeni KAP Bildirimi:\n{text}")
+                    old_ids.add(idx)
+
+            print(f"[TEST] Toplam çekilen: {len(old_ids)}")
+
+        except Exception as e:
+            send(f"❌ Hata:\n{e}")
+
+        time.sleep(CHECK_INTERVAL)
+
+if __name__ == "__main__":
+    main()
