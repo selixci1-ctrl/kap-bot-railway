@@ -14,13 +14,8 @@ if not TOKEN or not CHAT_ID:
 
 URL = "https://www.kap.org.tr/tr/Bildirimler"
 
-FILTER_WORDS = [
-    "Yeni İş İlişkisi",
-    "Finansal Rapor",
-    "Sermaye Artırımı - Azaltımı İşlemlerine İlişkin Bildirim",
-    "Payların Geri Alınmasına İlişkin Bildirim",
-    "Esas Sözleşme Tadili"
-]
+# FILTER_WORDS geçici olarak kaldırıldı, test için tüm haberleri çekecek
+FILTER_WORDS = []
 
 CHECK_INTERVAL = 90  # saniye
 TEST_MODE = True     # True olursa her haberi log'a yazdırır
@@ -53,12 +48,11 @@ def get_haberler():
     for row in rows:
         text = row.get_text(" ", strip=True)
 
-        for word in FILTER_WORDS:
-            if word in text:
-                haberler.append(text)
-                if TEST_MODE:
-                    print(f"[TEST] Haber bulundu: {text}")
-                break
+        # Filtreyi geçici olarak kaldırıyoruz, tüm haberler loglanacak
+        haberler.append(text)
+
+        if TEST_MODE:
+            print(f"[TEST] Haber bulundu: {text}")
 
     if TEST_MODE:
         print(f"[TEST] Toplam haber sayısı: {len(haberler)}")
